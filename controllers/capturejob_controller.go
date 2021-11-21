@@ -28,8 +28,9 @@ import (
 
 	batchv1 "entropie.ai/carnot/api/v1"
 	corev1 "k8s.io/api/core/v1"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
+	"entropie.ai/carnot/pkg/capture"
 )
 
 const (
@@ -39,6 +40,7 @@ const (
 
 // CaptureJobReconciler reconciles a CaptureJob object
 type CaptureJobReconciler struct {
+	capture.Capture
 	client.Client
 	Scheme *runtime.Scheme
 }
@@ -60,11 +62,13 @@ type CaptureJobReconciler struct {
 func (r *CaptureJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
+	r.Capture.WithPort("5678").WithIface("eth0").Start()
+
 	// TODO(user): your logic here
 	// Load the CronJob by name
 	var captureJob batchv1.CaptureJob
 
-	if req.Name == "capturejob-sample" {
+	if req.Name == "capturejob-sample1" {
 		log.V(1).Info(req.Namespace)
 		if err := r.Get(ctx, req.NamespacedName, &captureJob); err != nil {
 			log.Error(err, "unable to fetch CaptureJob")
