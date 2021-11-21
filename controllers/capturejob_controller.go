@@ -63,8 +63,9 @@ func (r *CaptureJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	// TODO(user): your logic here
 	// Load the CronJob by name
 	var captureJob batchv1.CaptureJob
-	log.V(1).Info(req.Name)
-	if req.Name == "capturejob-sample1" {
+
+	if req.Name == "capturejob-sample" {
+		log.V(1).Info(req.Namespace)
 		if err := r.Get(ctx, req.NamespacedName, &captureJob); err != nil {
 			log.Error(err, "unable to fetch CaptureJob")
 			if apierrors.IsNotFound(err) {
@@ -79,20 +80,22 @@ func (r *CaptureJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	// Load the pod
-	var pod corev1.Pod
-	if err := r.Get(ctx, req.NamespacedName, &pod); err != nil {
+	var service corev1.Service
+	if err := r.Get(ctx, req.NamespacedName, &service); err != nil {
 		if apierrors.IsNotFound(err) {
 			// we'll ignore not-found errors, since we can get them on deleted requests.
 			return ctrl.Result{}, nil
 		}
-		log.Error(err, "unable to fetch Pod")
+		log.Error(err, "unable to fetch service")
 		return ctrl.Result{}, err
 	}
 
 	// labelShouldBePresent := pod.Annotations[addPodNameLabelAnnotation] == "true"
 	// labelIsPresent := pod.Labels[podNameLabel] == pod.Name
 
-	log.V(1).Info(pod.Name)
+	log.V(1).Info(service.Name)
+	log.V(1).Info(service.Spec.ClusterIP)
+	log.V(1).Info(service.Spec.Ports[0].String())
 
 	// if labelShouldBePresent == labelIsPresent {
 	// 	// The desired state and actual state of the Pod are the same.
@@ -137,7 +140,7 @@ func (r *CaptureJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 func (r *CaptureJobReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&batchv1.CaptureJob{}).
-		Watches(&source.Kind{Type: &corev1.Pod{}},
+		Watches(&source.Kind{Type: &corev1.Service{}},
 			&handler.EnqueueRequestForObject{}).
 		Complete(r)
 }
