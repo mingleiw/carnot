@@ -1,0 +1,20 @@
+# permissions for end users to view capturejobs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: capturejob-viewer-role
+rules:
+- apiGroups:
+  - batch.entropie.ai
+  resources:
+  - capturejobs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - batch.entropie.ai
+  resources:
+  - capturejobs/status
+  verbs:
+  - get

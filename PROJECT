@@ -1,0 +1,16 @@
+domain: entropie.ai
+layout:
+- go.kubebuilder.io/v3
+projectName: carnot
+repo: entropie.ai/carnot
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: entropie.ai
+  group: batch
+  kind: CaptureJob
+  path: entropie.ai/carnot/api/v1
+  version: v1
+version: "3"

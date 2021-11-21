@@ -1,0 +1,6 @@
+apiVersion: batch.entropie.ai/v1
+kind: CaptureJob
+metadata:
+  name: capturejob-sample
+spec:
+  # TODO(user): Add fields here
