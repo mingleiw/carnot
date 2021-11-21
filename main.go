@@ -85,6 +85,10 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "CaptureJob")
 		os.Exit(1)
 	}
+	// if err = (&batchv1.CaptureJob{}).SetupWebhookWithManager(mgr); err != nil {
+	// 	setupLog.Error(err, "unable to create webhook", "webhook", "CaptureJob")
+	// 	os.Exit(1)
+	// }
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

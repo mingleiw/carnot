@@ -47,9 +47,18 @@ type CaptureJobReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.10.0/pkg/reconcile
 func (r *CaptureJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	log := log.FromContext(ctx)
 
 	// TODO(user): your logic here
+	// Load the CronJob by name
+	var captureJob batchv1.CaptureJob
+	if err := r.Get(ctx, req.NamespacedName, &captureJob); err != nil {
+		log.Error(err, "unable to fetch CaptureJob")
+
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	log.V(1).Info("found the capture job", "port", captureJob.Spec.ListeningPort)
 
 	return ctrl.Result{}, nil
 }
