@@ -22,9 +22,19 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	batchv1 "entropie.ai/carnot/api/v1"
+	corev1 "k8s.io/api/core/v1"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+)
+
+const (
+	addPodNameLabelAnnotation = "entropie.ai/add-pod-name-label"
+	podNameLabel              = "entropie.ai/pod-name"
 )
 
 // CaptureJobReconciler reconciles a CaptureJob object
@@ -36,6 +46,7 @@ type CaptureJobReconciler struct {
 //+kubebuilder:rbac:groups=batch.entropie.ai,resources=capturejobs,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=batch.entropie.ai,resources=capturejobs/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=batch.entropie.ai,resources=capturejobs/finalizers,verbs=update
+// +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;update;patch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -52,13 +63,72 @@ func (r *CaptureJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	// TODO(user): your logic here
 	// Load the CronJob by name
 	var captureJob batchv1.CaptureJob
-	if err := r.Get(ctx, req.NamespacedName, &captureJob); err != nil {
-		log.Error(err, "unable to fetch CaptureJob")
+	log.V(1).Info(req.Name)
+	if req.Name == "capturejob-sample1" {
+		if err := r.Get(ctx, req.NamespacedName, &captureJob); err != nil {
+			log.Error(err, "unable to fetch CaptureJob")
+			if apierrors.IsNotFound(err) {
+				// we'll ignore not-found errors, since we can get them on deleted requests.
+				return ctrl.Result{}, nil
+			}
 
-		return ctrl.Result{}, client.IgnoreNotFound(err)
+			return ctrl.Result{}, err
+		}
+
+		log.V(1).Info("found the capture job", "port", captureJob.Spec.ListeningPort)
 	}
 
-	log.V(1).Info("found the capture job", "port", captureJob.Spec.ListeningPort)
+	// Load the pod
+	var pod corev1.Pod
+	if err := r.Get(ctx, req.NamespacedName, &pod); err != nil {
+		if apierrors.IsNotFound(err) {
+			// we'll ignore not-found errors, since we can get them on deleted requests.
+			return ctrl.Result{}, nil
+		}
+		log.Error(err, "unable to fetch Pod")
+		return ctrl.Result{}, err
+	}
+
+	// labelShouldBePresent := pod.Annotations[addPodNameLabelAnnotation] == "true"
+	// labelIsPresent := pod.Labels[podNameLabel] == pod.Name
+
+	log.V(1).Info(pod.Name)
+
+	// if labelShouldBePresent == labelIsPresent {
+	// 	// The desired state and actual state of the Pod are the same.
+	// 	// No further action is required by the operator at this moment.
+	// 	log.Info("no update required")
+	// 	return ctrl.Result{}, nil
+	// }
+
+	// if labelShouldBePresent {
+	// 	// If the label should be set but is not, set it.
+	// 	if pod.Labels == nil {
+	// 		pod.Labels = make(map[string]string)
+	// 	}
+	// 	pod.Labels[podNameLabel] = pod.Name
+	// 	log.Info("adding label")
+	// } else {
+	// 	// If the label should not be set but is, remove it.
+	// 	delete(pod.Labels, podNameLabel)
+	// 	log.Info("removing label")
+	// }
+
+	// if err := r.Update(ctx, &pod); err != nil {
+	// 	if apierrors.IsConflict(err) {
+	// 		// The Pod has been updated since we read it.
+	// 		// Requeue the Pod to try to reconciliate again.
+	// 		return ctrl.Result{Requeue: true}, nil
+	// 	}
+	// 	if apierrors.IsNotFound(err) {
+	// 		// The Pod has been deleted since we read it.
+	// 		// Requeue the Pod to try to reconciliate again.
+	// 		return ctrl.Result{Requeue: true}, nil
+	// 	}
+	// 	log.Error(err, "unable to update Pod")
+
+	// 	return ctrl.Result{}, err
+	// }
 
 	return ctrl.Result{}, nil
 }
@@ -67,5 +137,7 @@ func (r *CaptureJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 func (r *CaptureJobReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&batchv1.CaptureJob{}).
+		Watches(&source.Kind{Type: &corev1.Pod{}},
+			&handler.EnqueueRequestForObject{}).
 		Complete(r)
 }
