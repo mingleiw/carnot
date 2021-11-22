@@ -4,6 +4,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+
+	"entropie.ai/pkg/capture"
 )
 
 type example struct {
@@ -16,6 +18,9 @@ func test(rw http.ResponseWriter, req *http.Request) {
 		panic(err)
 	}
 	log.Println(string(body))
+
+	c := &capture.Capture{}
+	go c.WithIface("lo").WithPort("3000").Start()
 }
 
 func main() {

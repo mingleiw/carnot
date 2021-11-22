@@ -1,17 +1,17 @@
 # Build the manager binary
 FROM golang:1.16 as builder
 
-WORKDIR /chaosdaemon
+RUN apt-get update
+RUN apt-get install -y libpcap-dev
 
-COPY go.mod ./
+WORKDIR /chaos-daemon
+
+# Copy the go source
+COPY ./ ./
 
 RUN go mod download
 
-# Copy the go source
-COPY *.go ./
-
 # Build
-RUN go build -o chaosdaemon main.go
+RUN go build .
 
-RUN chmod +x chaosdaemon
-ENTRYPOINT ["./chaosdaemon"]
+ENTRYPOINT ["./chaos-daemon"]
