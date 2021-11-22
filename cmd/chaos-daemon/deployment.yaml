@@ -1,0 +1,22 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: entropie
+  name: chaos-daemon
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      name: chaos-daemon
+  template:
+    metadata:
+      labels:
+        name: chaos-daemon
+    spec:
+      containers:
+      - name: application
+        image: entropieai/chaos-daemon
+        imagePullPolicy: IfNotPresent
+        ports:
+          - containerPort: 3000
