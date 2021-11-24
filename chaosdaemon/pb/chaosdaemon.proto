@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option go_package = "entropie.ai/carnot/chaosdaemon";
+
+package pb;
+
+service ChaosDaemon {
+    rpc CaptureTraffic(Target) returns (stream Payload) {}
+}
+
+message Target {
+    string port = 1;
+}
+
+message Payload {
+    string body = 1;
+}
+
+
